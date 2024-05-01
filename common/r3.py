@@ -4,9 +4,18 @@ from math import sin, cos
 class R3:
     """ Вектор (точка) в R3 """
 
+    PLANE_Y = -1
+
     # Конструктор
-    def __init__(self, x, y, z):
+    def __init__(self, x, y, z, is_nice=None):
         self.x, self.y, self.z = x, y, z
+        if is_nice is None:
+            self.is_nice = abs(y - (-1)) > 2
+        else:
+            self.is_nice = is_nice
+
+    def __abs__(self):
+        return (self.x ** 2 + self.y ** 2 + self.z ** 2) ** 0.5
 
     # Сумма векторов
     def __add__(self, other):
@@ -18,18 +27,18 @@ class R3:
 
     # Умножение на число
     def __mul__(self, k):
-        return R3(k * self.x, k * self.y, k * self.z)
+        return R3(k * self.x, k * self.y, k * self.z, self.is_nice)
 
     # Поворот вокруг оси Oz
     def rz(self, fi):
         return R3(
             cos(fi) * self.x - sin(fi) * self.y,
-            sin(fi) * self.x + cos(fi) * self.y, self.z)
+            sin(fi) * self.x + cos(fi) * self.y, self.z, self.is_nice)
 
     # Поворот вокруг оси Oy
     def ry(self, fi):
         return R3(cos(fi) * self.x + sin(fi) * self.z,
-                  self.y, -sin(fi) * self.x + cos(fi) * self.z)
+                  self.y, -sin(fi) * self.x + cos(fi) * self.z, self.is_nice)
 
     # Скалярное произведение
     def dot(self, other):

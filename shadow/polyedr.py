@@ -7,6 +7,7 @@ from common.tk_drawer import TkDrawer
 
 class Segment:
     """ Одномерный отрезок """
+
     # Параметры конструктора: начало и конец отрезка (числа)
 
     def __init__(self, beg, fin):
@@ -83,10 +84,12 @@ class Edge:
 
 class Facet:
     """ Грань полиэдра """
+
     # Параметры конструктора: список вершин
 
-    def __init__(self, vertexes):
+    def __init__(self, vertexes, is_nice=False):
         self.vertexes = vertexes
+        self.is_nice = is_nice
 
     # «Вертикальна» ли грань?
     def is_vertical(self):
@@ -95,7 +98,7 @@ class Facet:
     # Нормаль к «горизонтальному» полупространству
     def h_normal(self):
         n = (
-            self.vertexes[1] - self.vertexes[0]).cross(
+                self.vertexes[1] - self.vertexes[0]).cross(
             self.vertexes[2] - self.vertexes[0])
         return n * (-1.0) if n.dot(Polyedr.V) < 0.0 else n
 
@@ -108,8 +111,8 @@ class Facet:
     # Вспомогательный метод
     def _vert(self, k):
         n = (self.vertexes[k] - self.vertexes[k - 1]).cross(Polyedr.V)
-        return n * \
-            (-1.0) if n.dot(self.vertexes[k - 1] - self.center()) < 0.0 else n
+        return n * (-1.0)\
+            if n.dot(self.vertexes[k - 1] - self.center()) < 0.0 else n
 
     # Центр грани
     def center(self):
@@ -127,6 +130,7 @@ class Polyedr:
 
         # списки вершин, рёбер и граней полиэдра
         self.vertexes, self.edges, self.facets = [], [], []
+        self.area = 0
 
         # список строк файла
         with open(file) as f:
@@ -152,12 +156,28 @@ class Polyedr:
                     # количество вершин очередной грани
                     size = int(buf.pop(0))
                     # массив вершин этой грани
-                    vertexes = list(self.vertexes[int(n) - 1] for n in buf)
+                    area = 0
+                    nice_count = 0
+                    vertexes = list()
+                    for j, n in enumerate(buf):
+                        vertexes.append(self.vertexes[int(n) - 1])
+                        if vertexes[-1].is_nice:
+                            nice_count += 1
+
+                        if 1 < j:
+                            v0 = vertexes[0] * (1 / c)
+                            v1 = vertexes[-1] * (1 / c)
+                            v2 = vertexes[-2] * (1 / c)
+                            ab, ac = v1 - v0, v2 - v0
+                            area += abs(ab.cross(ac)) / 2
+
                     # задание рёбер грани
                     for n in range(size):
                         self.edges.append(Edge(vertexes[n - 1], vertexes[n]))
                     # задание самой грани
-                    self.facets.append(Facet(vertexes))
+                    self.facets.append(Facet(vertexes, nice_count <= 2))
+                    if self.facets[-1].is_nice:
+                        self.area += area
 
     # Метод изображения полиэдра
     def draw(self, tk):  # pragma: no cover

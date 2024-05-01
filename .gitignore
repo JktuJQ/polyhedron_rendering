@@ -3,3 +3,5 @@
 .ipynb_checkpoints
 .pytest_cache
 __pytest__
+__pycache__
+.coverage
